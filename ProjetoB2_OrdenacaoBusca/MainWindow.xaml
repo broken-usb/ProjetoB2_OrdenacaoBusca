@@ -1,0 +1,13 @@
+﻿<Window x:Class="ProjetoB2_OrdenacaoBusca.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Projeto de Ordenação e Busca" Height="350" Width="525">
+    <Grid>
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Button Name="GenerateButton" Content="Gerar Lista" Click="GenerateButton_Click" Width="200" Margin="5"/>
+            <Button Name="SortButton" Content="Ordenar Lista" Click="SortButton_Click" Width="200" Margin="5"/>
+            <Button Name="SearchButton" Content="Buscar na Lista" Click="SearchButton_Click" Width="200" Margin="5"/>
+            <TextBlock Name="OutputText" Text="Resultados aparecerão aqui." TextWrapping="Wrap" Margin="5" />
+        </StackPanel>
+    </Grid>
+</Window>
