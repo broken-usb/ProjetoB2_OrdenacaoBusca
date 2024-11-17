@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -10,20 +11,19 @@ namespace ProjetoB2_OrdenacaoBusca
 {
     public partial class MainWindow : Window
     {
-        private List<int> originalValues; // Lista com os valores originais
-        private List<int> currentValues; // Lista com os valores sendo manipulados
+        private List<int> originalValues;
+        private List<int> currentValues;
 
         public MainWindow()
         {
             InitializeComponent();
 
-            // Inicializa os botões com eventos
+            // Eventos dos botões
             GenerateValuesButton.Click += GenerateValuesButton_Click;
             SortValuesButton.Click += SortValuesButton_Click;
             OriginalValuesButton.Click += OriginalValuesButton_Click;
             ClearButton.Click += ClearButton_Click;
             ExitButton.Click += ExitButton_Click;
-            StatisticsButton.Click += StatisticsButton_Click; // Evento para o botão de estatísticas
         }
 
         /// <summary>
@@ -37,13 +37,12 @@ namespace ProjetoB2_OrdenacaoBusca
                 var random = new Random();
 
                 originalValues = Enumerable.Range(1, quantity)
-                                           .Select(_ => random.Next(1, 101)) // Números entre 1 e 100
+                                           .Select(_ => random.Next(1, 101))
                                            .ToList();
 
                 currentValues = new List<int>(originalValues);
                 ResultsTextBlock.Text = $"Valores Gerados: {string.Join(", ", currentValues)}";
-
-                DrawGraph(currentValues); // Atualiza o gráfico
+                DrawGraph(currentValues);
             }
             catch
             {
@@ -52,7 +51,7 @@ namespace ProjetoB2_OrdenacaoBusca
         }
 
         /// <summary>
-        /// Ordena os valores usando o método selecionado.
+        /// Ordena os valores e exibe o tempo de execução.
         /// </summary>
         private void SortValuesButton_Click(object sender, RoutedEventArgs e)
         {
@@ -65,6 +64,8 @@ namespace ProjetoB2_OrdenacaoBusca
             try
             {
                 string selectedMethod = ((ComboBoxItem)SortMethodComboBox.SelectedItem).Content.ToString();
+
+                var stopwatch = Stopwatch.StartNew(); // Inicia o cronômetro
 
                 switch (selectedMethod)
                 {
@@ -88,7 +89,11 @@ namespace ProjetoB2_OrdenacaoBusca
                         return;
                 }
 
-                ResultsTextBlock.Text = $"Valores Ordenados ({selectedMethod}): {string.Join(", ", currentValues)}";
+                stopwatch.Stop(); // Para o cronômetro
+                TimeSpan elapsed = stopwatch.Elapsed;
+
+                ResultsTextBlock.Text = $"Valores Ordenados ({selectedMethod}): {string.Join(", ", currentValues)}\n" +
+                                        $"Tempo de execução: {elapsed.TotalMilliseconds:F3} ms";
 
                 DrawGraph(currentValues); // Atualiza o gráfico
             }
@@ -111,12 +116,11 @@ namespace ProjetoB2_OrdenacaoBusca
 
             currentValues = new List<int>(originalValues);
             ResultsTextBlock.Text = $"Valores Originais: {string.Join(", ", currentValues)}";
-
-            DrawGraph(currentValues); // Atualiza o gráfico
+            DrawGraph(currentValues);
         }
 
         /// <summary>
-        /// Limpa os valores e os resultados.
+        /// Limpa os valores e resultados.
         /// </summary>
         private void ClearButton_Click(object sender, RoutedEventArgs e)
         {
@@ -124,25 +128,6 @@ namespace ProjetoB2_OrdenacaoBusca
             currentValues = null;
             ResultsTextBlock.Text = "Resultados aparecerão aqui...";
             GraphCanvas.Children.Clear(); // Limpa o gráfico
-        }
-
-        /// <summary>
-        /// Exibe estatísticas sobre os valores.
-        /// </summary>
-        private void StatisticsButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (originalValues == null || !originalValues.Any())
-            {
-                MessageBox.Show("Gere os valores primeiro.", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-            string stats = $"Quantidade de valores: {originalValues.Count}\n" +
-                           $"Valor mínimo: {originalValues.Min()}\n" +
-                           $"Valor máximo: {originalValues.Max()}\n" +
-                           $"Soma dos valores: {originalValues.Sum()}";
-
-            MessageBox.Show(stats, "Estatísticas", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         /// <summary>
@@ -158,41 +143,46 @@ namespace ProjetoB2_OrdenacaoBusca
         /// </summary>
         private void DrawGraph(List<int> values)
         {
-            if (values == null || !values.Any())
-            {
-                GraphCanvas.Children.Clear();
-                return;
-            }
+            GraphCanvas.Children.Clear();
+            if (values == null || !values.Any()) return;
 
-            GraphCanvas.Children.Clear(); // Limpa gráficos antigos
-
-            double canvasHeight = GraphCanvas.ActualHeight;
             double canvasWidth = GraphCanvas.ActualWidth;
-            double barWidth = canvasWidth / values.Count; // Largura de cada barra
+            double canvasHeight = GraphCanvas.ActualHeight;
+            double barWidth = canvasWidth / values.Count;
+
             double maxValue = values.Max();
 
             for (int i = 0; i < values.Count; i++)
             {
                 double barHeight = (values[i] / maxValue) * canvasHeight;
 
-                // Desenha um retângulo (barra)
-                var bar = new Rectangle
+                // Desenha a barra
+                var rect = new Rectangle
                 {
-                    Width = barWidth - 2, // Margem entre barras
+                    Width = barWidth - 2, // Espaço entre as barras
                     Height = barHeight,
-                    Fill = Brushes.Blue,
+                    Fill = Brushes.SteelBlue
                 };
 
-                // Posiciona a barra
-                Canvas.SetLeft(bar, i * barWidth);
-                Canvas.SetTop(bar, canvasHeight - barHeight);
+                Canvas.SetLeft(rect, i * barWidth);
+                Canvas.SetTop(rect, canvasHeight - barHeight);
+                GraphCanvas.Children.Add(rect);
 
-                GraphCanvas.Children.Add(bar);
+                // Exibe o valor no topo da barra
+                var text = new TextBlock
+                {
+                    Text = values[i].ToString(),
+                    FontSize = 12,
+                    Foreground = Brushes.Black
+                };
+
+                Canvas.SetLeft(text, i * barWidth + (barWidth - text.ActualWidth) / 2);
+                Canvas.SetTop(text, canvasHeight - barHeight - 20); // 20px acima da barra
+                GraphCanvas.Children.Add(text);
             }
         }
 
         #region Algoritmos de Ordenação
-
         private void BubbleSort(List<int> list)
         {
             for (int i = 0; i < list.Count - 1; i++)
@@ -201,7 +191,7 @@ namespace ProjetoB2_OrdenacaoBusca
                 {
                     if (list[j] > list[j + 1])
                     {
-                        (list[j], list[j + 1]) = (list[j + 1], list[j]); // Troca
+                        (list[j], list[j + 1]) = (list[j + 1], list[j]);
                     }
                 }
             }
@@ -214,7 +204,7 @@ namespace ProjetoB2_OrdenacaoBusca
                 int minIndex = i;
                 for (int j = i + 1; j < list.Count; j++)
                 {
-                    if (list[j] < minIndex)
+                    if (list[j] < list[minIndex])
                     {
                         minIndex = j;
                     }
@@ -258,7 +248,7 @@ namespace ProjetoB2_OrdenacaoBusca
         private int Partition(List<int> list, int low, int high)
         {
             int pivot = list[high];
-            int i = (low - 1);
+            int i = low - 1;
 
             for (int j = low; j < high; j++)
             {
@@ -307,7 +297,6 @@ namespace ProjetoB2_OrdenacaoBusca
 
             return result;
         }
-
         #endregion
     }
 }
