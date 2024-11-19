@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -13,6 +14,7 @@ namespace ProjetoB2_OrdenacaoBusca
     {
         private List<int> originalValues;
         private List<int> currentValues;
+        private int sortingDelay = 100; // Delay padrão em milissegundos
 
         public MainWindow()
         {
@@ -24,6 +26,7 @@ namespace ProjetoB2_OrdenacaoBusca
             OriginalValuesButton.Click += OriginalValuesButton_Click;
             ClearButton.Click += ClearButton_Click;
             ExitButton.Click += ExitButton_Click;
+            SettingsButton.Click += SettingsButton_Click; // Adicionado evento do botão Configurações
         }
 
         /// <summary>
@@ -70,16 +73,16 @@ namespace ProjetoB2_OrdenacaoBusca
                 switch (selectedMethod)
                 {
                     case "Bubble Sort":
-                        BubbleSort(currentValues);
+                        _ = BubbleSortAsync(currentValues);
                         break;
                     case "Selection Sort":
-                        SelectionSort(currentValues);
+                        _ = SelectionSortAsync(currentValues);
                         break;
                     case "Insertion Sort":
-                        InsertionSort(currentValues);
+                        _ = InsertionSortAsync(currentValues);
                         break;
                     case "Quick Sort":
-                        QuickSort(currentValues, 0, currentValues.Count - 1);
+                        _ = QuickSortAsync(currentValues, 0, currentValues.Count - 1);
                         break;
                     case "Merge Sort":
                         currentValues = MergeSort(currentValues);
@@ -139,6 +142,21 @@ namespace ProjetoB2_OrdenacaoBusca
         }
 
         /// <summary>
+        /// Abre a janela de configurações para ajustar a velocidade de ordenação.
+        /// </summary>
+        private void SettingsButton_Click(object sender, RoutedEventArgs e)
+        {
+            var settingsWindow = new SettingsWindow(sortingDelay);
+
+            if (settingsWindow.ShowDialog() == true) // Exibe a janela de configurações
+            {
+                sortingDelay = settingsWindow.SortingDelay; // Atualiza o delay
+                ResultsTextBlock.Text = $"Velocidade de Ordenação Alterada: " +
+                                        (sortingDelay == 0 ? "Sem Delay" : $"{sortingDelay} ms");
+            }
+        }
+
+        /// <summary>
         /// Desenha o gráfico no Canvas.
         /// </summary>
         private void DrawGraph(List<int> values)
@@ -183,7 +201,7 @@ namespace ProjetoB2_OrdenacaoBusca
         }
 
         #region Algoritmos de Ordenação
-        private void BubbleSort(List<int> list)
+        private async Task BubbleSortAsync(List<int> list)
         {
             for (int i = 0; i < list.Count - 1; i++)
             {
@@ -192,12 +210,15 @@ namespace ProjetoB2_OrdenacaoBusca
                     if (list[j] > list[j + 1])
                     {
                         (list[j], list[j + 1]) = (list[j + 1], list[j]);
+
+                        DrawGraph(list);
+                        await Task.Delay(sortingDelay);
                     }
                 }
             }
         }
 
-        private void SelectionSort(List<int> list)
+        private async Task SelectionSortAsync(List<int> list)
         {
             for (int i = 0; i < list.Count - 1; i++)
             {
@@ -214,10 +235,13 @@ namespace ProjetoB2_OrdenacaoBusca
                 {
                     (list[i], list[minIndex]) = (list[minIndex], list[i]);
                 }
+
+                DrawGraph(list);
+                await Task.Delay(sortingDelay);
             }
         }
 
-        private void InsertionSort(List<int> list)
+        private async Task InsertionSortAsync(List<int> list)
         {
             for (int i = 1; i < list.Count; i++)
             {
@@ -231,17 +255,23 @@ namespace ProjetoB2_OrdenacaoBusca
                 }
 
                 list[j + 1] = key;
+
+                DrawGraph(list);
+                await Task.Delay(sortingDelay);
             }
         }
 
-        private void QuickSort(List<int> list, int low, int high)
+        private async Task QuickSortAsync(List<int> list, int low, int high)
         {
             if (low < high)
             {
                 int pi = Partition(list, low, high);
 
-                QuickSort(list, low, pi - 1);
-                QuickSort(list, pi + 1, high);
+                _ = QuickSortAsync(list, low, pi - 1);
+                _ = QuickSortAsync(list, pi + 1, high);
+
+                DrawGraph(list);
+                await Task.Delay(sortingDelay);
             }
         }
 
