@@ -361,3 +361,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/doc/215483_Relatorio_ProjetoB2.pdf
+/doc
