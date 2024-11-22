@@ -12,6 +12,7 @@ namespace ProjetoB2_OrdenacaoBusca
 {
     public partial class MainWindow : Window
     {
+        MetricsCollector metrics = new MetricsCollector();
         private List<int> originalValues;
         private List<int> currentValues;
         private int sortingDelay = 100; // Delay padrão em milissegundos
@@ -26,7 +27,7 @@ namespace ProjetoB2_OrdenacaoBusca
             OriginalValuesButton.Click += OriginalValuesButton_Click;
             ClearButton.Click += ClearButton_Click;
             ExitButton.Click += ExitButton_Click;
-            SettingsButton.Click += SettingsButton_Click; // Adicionado evento do botão Configurações
+            SettingsButton.Click += SettingsButton_Click; // Adicionado evento para o botão Configurações
         }
 
         /// <summary>
@@ -156,6 +157,22 @@ namespace ProjetoB2_OrdenacaoBusca
             }
         }
 
+        private List<SortingStatistics> statistics = new List<SortingStatistics>();
+
+        private void StatisticsButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (statistics.Count == 0)
+            {
+                MessageBox.Show("Não há estatísticas disponíveis. Realize uma ordenação primeiro.",
+                                "Aviso", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var statisticsWindow = new StatisticsWindow(statistics);
+            statisticsWindow.ShowDialog();
+        }
+
+
         /// <summary>
         /// Desenha o gráfico no Canvas.
         /// </summary>
@@ -186,7 +203,7 @@ namespace ProjetoB2_OrdenacaoBusca
                 Canvas.SetTop(rect, canvasHeight - barHeight);
                 GraphCanvas.Children.Add(rect);
 
-                // Exibe o valor no topo da barra
+                // Adiciona o texto (valor) acima da barra
                 var text = new TextBlock
                 {
                     Text = values[i].ToString(),
@@ -195,10 +212,11 @@ namespace ProjetoB2_OrdenacaoBusca
                 };
 
                 Canvas.SetLeft(text, i * barWidth + (barWidth - text.ActualWidth) / 2);
-                Canvas.SetTop(text, canvasHeight - barHeight - 20); // 20px acima da barra
+                Canvas.SetTop(text, canvasHeight - barHeight - 20); // 20 pixels acima da barra
                 GraphCanvas.Children.Add(text);
             }
         }
+
 
         #region Algoritmos de Ordenação
         private async Task BubbleSortAsync(List<int> list)
@@ -252,10 +270,12 @@ namespace ProjetoB2_OrdenacaoBusca
                 {
                     list[j + 1] = list[j];
                     j--;
+
+                    DrawGraph(list);
+                    await Task.Delay(sortingDelay);
                 }
 
                 list[j + 1] = key;
-
                 DrawGraph(list);
                 await Task.Delay(sortingDelay);
             }
@@ -265,13 +285,13 @@ namespace ProjetoB2_OrdenacaoBusca
         {
             if (low < high)
             {
-                int pi = Partition(list, low, high);
-
-                _ = QuickSortAsync(list, low, pi - 1);
-                _ = QuickSortAsync(list, pi + 1, high);
+                int pivotIndex = Partition(list, low, high);
 
                 DrawGraph(list);
                 await Task.Delay(sortingDelay);
+
+                await QuickSortAsync(list, low, pivotIndex - 1);
+                await QuickSortAsync(list, pivotIndex + 1, high);
             }
         }
 
@@ -282,7 +302,7 @@ namespace ProjetoB2_OrdenacaoBusca
 
             for (int j = low; j < high; j++)
             {
-                if (list[j] < pivot)
+                if (list[j] <= pivot)
                 {
                     i++;
                     (list[i], list[j]) = (list[j], list[i]);
@@ -295,11 +315,12 @@ namespace ProjetoB2_OrdenacaoBusca
 
         private List<int> MergeSort(List<int> list)
         {
-            if (list.Count <= 1) return list;
+            if (list.Count <= 1)
+                return list;
 
             int mid = list.Count / 2;
-            var left = MergeSort(list.GetRange(0, mid));
-            var right = MergeSort(list.GetRange(mid, list.Count - mid));
+            var left = MergeSort(list.Take(mid).ToList());
+            var right = MergeSort(list.Skip(mid).ToList());
 
             return Merge(left, right);
         }
@@ -307,24 +328,24 @@ namespace ProjetoB2_OrdenacaoBusca
         private List<int> Merge(List<int> left, List<int> right)
         {
             var result = new List<int>();
+            int i = 0, j = 0;
 
-            while (left.Any() && right.Any())
+            while (i < left.Count && j < right.Count)
             {
-                if (left.First() <= right.First())
+                if (left[i] <= right[j])
                 {
-                    result.Add(left.First());
-                    left.RemoveAt(0);
+                    result.Add(left[i]);
+                    i++;
                 }
                 else
                 {
-                    result.Add(right.First());
-                    right.RemoveAt(0);
+                    result.Add(right[j]);
+                    j++;
                 }
             }
 
-            result.AddRange(left);
-            result.AddRange(right);
-
+            result.AddRange(left.Skip(i));
+            result.AddRange(right.Skip(j));
             return result;
         }
         #endregion

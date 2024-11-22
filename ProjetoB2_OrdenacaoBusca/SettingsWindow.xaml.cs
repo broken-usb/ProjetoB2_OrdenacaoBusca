@@ -44,5 +44,10 @@ namespace ProjetoB2_OrdenacaoBusca
         {
             DialogResult = false; // Fecha a janela sem salvar alterações
         }
+
+        private void NoDelayRadioButton_Checked(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }
