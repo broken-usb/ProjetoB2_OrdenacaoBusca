@@ -24,5 +24,7 @@ namespace ProjetoB2_OrdenacaoBusca
             }
             return (sortedArray, comparisons, swaps);
         }
+
+        // Outros algoritmos de ordenação podem ser adicionados aqui seguindo o mesmo padrão.
     }
 }

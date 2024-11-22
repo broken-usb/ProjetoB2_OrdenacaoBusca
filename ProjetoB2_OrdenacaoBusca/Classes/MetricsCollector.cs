@@ -1,68 +1,53 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace ProjetoB2_OrdenacaoBusca
 {
     public class MetricsCollector
     {
-        private int ComparacoesBubble;
-        private int ComparacoesSelection;
-        private int ComparacoesInsertion;
-        private int ComparacoesQuick;
-        private int ComparacoesMerge;
-
-        // Bubble Sort
-        public void incComparacoesBubble()
+        private class Metrics
         {
-            this.ComparacoesBubble++;
+            public int Comparisons { get; set; }
+            public int Swaps { get; set; }
         }
 
-        public int getComparacoesBubble()
+        private readonly Dictionary<string, Metrics> metrics = new Dictionary<string, Metrics>();
+
+        public void IncrementComparison(string algorithm)
         {
-            return this.ComparacoesBubble;
+            if (!metrics.ContainsKey(algorithm))
+                metrics[algorithm] = new Metrics();
+
+            metrics[algorithm].Comparisons++;
         }
 
-        // Selection Sort
-        public void incComparacoesSelection()
+        public void IncrementSwap(string algorithm)
         {
-            this.ComparacoesSelection++;
+            if (!metrics.ContainsKey(algorithm))
+                metrics[algorithm] = new Metrics();
+
+            metrics[algorithm].Swaps++;
         }
 
-        public int getComparacoesSelection()
+        public (int Comparisons, int Swaps) GetMetrics(string algorithm)
         {
-            return this.ComparacoesSelection;
+            if (!metrics.ContainsKey(algorithm))
+                return (0, 0);
+
+            var metric = metrics[algorithm];
+            return (metric.Comparisons, metric.Swaps);
         }
 
-        // Insertion Sort
-        public void incComparacoesInsertion()
+        public void ResetMetrics(string algorithm)
         {
-            this.ComparacoesInsertion++;
+            if (metrics.ContainsKey(algorithm))
+                metrics[algorithm] = new Metrics();
         }
 
-        public int getComparacoesInsertion()
+        public void ResetAllMetrics()
         {
-            return this.ComparacoesInsertion;
-        }
-
-        // Quick Sort
-        public void incComparacoesQuick()
-        {
-            this.ComparacoesQuick++;
-        }
-
-        public int getComparacoesQuick()
-        {
-            return this.ComparacoesQuick;
-        }
-
-        // Merge Sort
-        public void incComparacoesMerge()
-        {
-            this.ComparacoesMerge++;
-        }
-
-        public int getComparacoesMerge()
-        {
-            return this.ComparacoesMerge;
+            metrics.Clear();
         }
     }
 }
+
