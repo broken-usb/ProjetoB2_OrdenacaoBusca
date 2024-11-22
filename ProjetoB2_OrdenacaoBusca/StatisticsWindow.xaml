@@ -10,19 +10,16 @@
         </Grid.RowDefinitions>
 
         <!-- Title -->
-        <TextBlock Text="Sorting and Searching Statistics" 
-                   FontSize="18" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+        <TextBlock 
+                   FontSize="18" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"><Run Language="pt-br" Text="Estatística Coletadas"/></TextBlock>
 
         <!-- Statistics Table -->
         <DataGrid Name="StatisticsGrid" Grid.Row="1" AutoGenerateColumns="True" IsReadOnly="True" Margin="0,10,0,10"/>
 
         <ListBox Name="StatisticsListBox" Grid.Row="1" />
-        <StackPanel Grid.Row="1">
-            <TextBlock Text="Delay de Ordenação (ms):" Margin="0,0,0,5"/>
-            <TextBox Name="DelayInput" Width="200" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-        </StackPanel>
+        <StackPanel Grid.Row="1"/>
 
         <!-- Buttons -->
-        <Button Grid.Row="2" Content="Close" Width="100" HorizontalAlignment="Center" Click="CloseWindow"/>
+        <Button Grid.Row="2" Content="Sair" Width="100" HorizontalAlignment="Center" Click="CloseWindow"/>
     </Grid>
 </Window>

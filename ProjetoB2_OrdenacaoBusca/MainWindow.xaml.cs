@@ -15,7 +15,7 @@ namespace ProjetoB2_OrdenacaoBusca
     {
         private List<int> originalValues;
         private List<int> currentValues;
-        private int sortingDelay = 100; // Delay padrão em milissegundos
+        private int sortingDelay = 10; // Delay padrão em milissegundos
         private List<SortingStatistics> statistics = new List<SortingStatistics>();
 
         public MainWindow()
@@ -77,16 +77,38 @@ namespace ProjetoB2_OrdenacaoBusca
                 switch (selectedMethod)
                 {
                     case "Bubble Sort":
-                        var resultBubble = await Task.Run(() =>
-                        {
-                            return SortingAlgorithms.BubbleSort(currentValues.ToArray());
-                        });
+                        var resultBubble = await SortingAlgorithms.BubbleSort(
+                            currentValues.ToArray(),
+                            async updatedArray =>
+                            {
+                                // Atualizar o gráfico na interface
+                                await Dispatcher.InvokeAsync(() => DrawGraph(updatedArray.ToList()));
+                            },
+                            sortingDelay // Passar o delay configurado
+                        );
+
                         comparisons = resultBubble.comparisons;
                         swaps = resultBubble.swaps;
                         currentValues = resultBubble.sortedArray.ToList();
                         break;
 
-                    // Adicione outros métodos de ordenação aqui, caso necessário.
+                    case "Selection Sort":
+                        MessageBox.Show("Este metodo ainda não foi implementado.", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                        break;
+
+                    case "Insertion Sort":
+                        MessageBox.Show("Este metodo ainda não foi implementado.", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                        break;
+
+                    case "Quick Sort":
+                        MessageBox.Show("Este metodo ainda não foi implementado.", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                        break;
+
+                    case "Merge Sort":
+                        MessageBox.Show("Este metodo ainda não foi implementado.", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                        break;
+
+                    // Adicione outros métodos de ordenação aqui
 
                     default:
                         MessageBox.Show("Selecione um método válido.", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -108,6 +130,7 @@ namespace ProjetoB2_OrdenacaoBusca
                 MessageBox.Show("Erro ao ordenar os valores.", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
 
         private void ClearButton_Click(object sender, RoutedEventArgs e)
         {

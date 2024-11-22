@@ -28,8 +28,8 @@
             <Button x:Name="OriginalValuesButton" Content="Valores Originais" Width="150" Margin="0,0,10,0"/>
         </StackPanel>
 
-        <Border Grid.Row="1" BorderBrush="Black" BorderThickness="1" Margin="10">
-            <Canvas x:Name="GraphCanvas" Background="White"/>
+        <Border Grid.Row="1" BorderBrush="Black" BorderThickness="1" Margin="5">
+            <Canvas x:Name="GraphCanvas" Background="White" Width="800" Height="300"/>
         </Border>
 
         <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="2">
