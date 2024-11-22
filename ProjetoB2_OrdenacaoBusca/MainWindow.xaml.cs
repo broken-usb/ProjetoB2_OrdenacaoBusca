@@ -93,34 +93,78 @@ namespace ProjetoB2_OrdenacaoBusca
                         break;
 
                     case "Selection Sort":
-                        MessageBox.Show("Este metodo ainda não foi implementado.", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                        var resultSelection = await SortingAlgorithms.SelectionSort(
+                            currentValues.ToArray(),
+                            async updatedArray =>
+                            {
+                                // Atualizar o gráfico na interface
+                                await Dispatcher.InvokeAsync(() => DrawGraph(updatedArray.ToList()));
+                            },
+                            sortingDelay
+                        );
+
+                        comparisons = resultSelection.comparisons;
+                        swaps = resultSelection.swaps;
+                        currentValues = resultSelection.sortedArray.ToList();
                         break;
 
                     case "Insertion Sort":
-                        MessageBox.Show("Este metodo ainda não foi implementado.", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                        var resultInsertion = await SortingAlgorithms.InsertionSort(
+                            currentValues.ToArray(),
+                            async updatedArray =>
+                            {
+                                // Atualizar o gráfico na interface
+                                await Dispatcher.InvokeAsync(() => DrawGraph(updatedArray.ToList()));
+                            },
+                            sortingDelay
+                        );
+
+                        comparisons = resultInsertion.comparisons;
+                        swaps = resultInsertion.swaps;
+                        currentValues = resultInsertion.sortedArray.ToList();
                         break;
 
                     case "Quick Sort":
-                        MessageBox.Show("Este metodo ainda não foi implementado.", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                        var resultQuick = await SortingAlgorithms.QuickSort(
+                            currentValues.ToArray(),
+                            async updatedArray =>
+                            {
+                                // Atualizar o gráfico na interface
+                                await Dispatcher.InvokeAsync(() => DrawGraph(updatedArray.ToList()));
+                            },
+                            sortingDelay
+                        );
+
+                        comparisons = resultQuick.comparisons;
+                        swaps = resultQuick.swaps;
+                        currentValues = resultQuick.sortedArray.ToList();
                         break;
 
                     case "Merge Sort":
-                        MessageBox.Show("Este metodo ainda não foi implementado.", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                        var resultMerge = await SortingAlgorithms.MergeSort(
+                            currentValues.ToArray(),
+                            async updatedArray =>
+                            {
+                                // Atualizar o gráfico na interface
+                                await Dispatcher.InvokeAsync(() => DrawGraph(updatedArray.ToList()));
+                            },
+                            sortingDelay
+                        );
+
+                        comparisons = resultMerge.comparisons;
+                        swaps = resultMerge.swaps;
+                        currentValues = resultMerge.sortedArray.ToList();
                         break;
 
-                    // Adicione outros métodos de ordenação aqui
-
                     default:
-                        MessageBox.Show("Selecione um método válido.", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
-                        return;
+                        MessageBox.Show("Método de ordenação não reconhecido.", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                        break;
                 }
 
                 stopwatch.Stop();
                 TimeSpan elapsed = stopwatch.Elapsed;
 
-                ResultsTextBlock.Text = $"Valores Ordenados ({selectedMethod}): {string.Join(", ", currentValues)}\n" +
-                                        $"Tempo de execução: {elapsed.TotalMilliseconds:F3} ms\n" +
-                                        $"Comparações: {comparisons}, Trocas: {swaps}";
+                ResultsTextBlock.Text = $"Estatísticas do metodo " + selectedMethod + " forma armazenadas com sucesso!";
 
                 DrawGraph(currentValues);
                 statistics.Add(new SortingStatistics(selectedMethod, comparisons, swaps, (long)elapsed.TotalMilliseconds));
