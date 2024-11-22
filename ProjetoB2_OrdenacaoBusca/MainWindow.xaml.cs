@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ProjetoB2_OrdenacaoBusca.Classes;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -12,39 +13,33 @@ namespace ProjetoB2_OrdenacaoBusca
 {
     public partial class MainWindow : Window
     {
-        MetricsCollector metrics = new MetricsCollector();
+        private MetricsCollector metrics = new MetricsCollector();
         private List<int> originalValues;
         private List<int> currentValues;
         private int sortingDelay = 100; // Delay padrão em milissegundos
+        private List<SortingStatistics> statistics = new List<SortingStatistics>();
 
         public MainWindow()
         {
             InitializeComponent();
-
             // Eventos dos botões
             GenerateValuesButton.Click += GenerateValuesButton_Click;
             SortValuesButton.Click += SortValuesButton_Click;
             OriginalValuesButton.Click += OriginalValuesButton_Click;
             ClearButton.Click += ClearButton_Click;
             ExitButton.Click += ExitButton_Click;
-            SettingsButton.Click += SettingsButton_Click; // Adicionado evento para o botão Configurações
+            SettingsButton.Click += SettingsButton_Click;
+            StatisticsButton.Click += StatisticsButton_Click;
         }
 
-        /// <summary>
-        /// Gera valores aleatórios.
-        /// </summary>
         private void GenerateValuesButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
                 int quantity = int.Parse(((ComboBoxItem)QuantityComboBox.SelectedItem).Content.ToString());
-                var random = new Random();
-
-                originalValues = Enumerable.Range(1, quantity)
-                                           .Select(_ => random.Next(1, 101))
-                                           .ToList();
-
+                originalValues = RandomListGenerator.GenerateRandomList(quantity, 100);
                 currentValues = new List<int>(originalValues);
+
                 ResultsTextBlock.Text = $"Valores Gerados: {string.Join(", ", currentValues)}";
                 DrawGraph(currentValues);
             }
@@ -54,10 +49,7 @@ namespace ProjetoB2_OrdenacaoBusca
             }
         }
 
-        /// <summary>
-        /// Ordena os valores e exibe o tempo de execução.
-        /// </summary>
-        private void SortValuesButton_Click(object sender, RoutedEventArgs e)
+        private async void SortValuesButton_Click(object sender, RoutedEventArgs e)
         {
             if (currentValues == null || !currentValues.Any())
             {
@@ -68,38 +60,61 @@ namespace ProjetoB2_OrdenacaoBusca
             try
             {
                 string selectedMethod = ((ComboBoxItem)SortMethodComboBox.SelectedItem).Content.ToString();
-
-                var stopwatch = Stopwatch.StartNew(); // Inicia o cronômetro
+                var stopwatch = Stopwatch.StartNew();
+                int comparisons = 0, swaps = 0;
 
                 switch (selectedMethod)
                 {
                     case "Bubble Sort":
-                        _ = BubbleSortAsync(currentValues);
+                        var resultBubble = await SortingAlgorithms.BubbleSortAsync(currentValues, sortingDelay, DrawGraph);
+                        comparisons = resultBubble.Comparisons;
+                        swaps = resultBubble.Swaps;
                         break;
+
                     case "Selection Sort":
-                        _ = SelectionSortAsync(currentValues);
+                        var resultSelection = await SortingAlgorithms.SelectionSortAsync(currentValues, sortingDelay, DrawGraph);
+                        comparisons = resultSelection.Comparisons;
+                        swaps = resultSelection.Swaps;
                         break;
+
                     case "Insertion Sort":
-                        _ = InsertionSortAsync(currentValues);
+                        var resultInsertion = await SortingAlgorithms.InsertionSortAsync(currentValues, sortingDelay, DrawGraph);
+                        comparisons = resultInsertion.Comparisons;
+                        swaps = resultInsertion.Swaps;
                         break;
+
                     case "Quick Sort":
-                        _ = QuickSortAsync(currentValues, 0, currentValues.Count - 1);
+                        var resultQuick = await SortingAlgorithms.QuickSortAsync(currentValues, 0, currentValues.Count - 1, sortingDelay, DrawGraph);
+                        comparisons = resultQuick.Comparisons;
+                        swaps = resultQuick.Swaps;
                         break;
+
                     case "Merge Sort":
-                        currentValues = MergeSort(currentValues);
+                        var resultMerge = SortingAlgorithms.MergeSort(currentValues);
+                        comparisons = resultMerge.Comparisons;
+                        currentValues = resultMerge.SortedArray;
                         break;
+
                     default:
                         MessageBox.Show("Selecione um método válido.", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
                         return;
                 }
 
-                stopwatch.Stop(); // Para o cronômetro
+                stopwatch.Stop();
                 TimeSpan elapsed = stopwatch.Elapsed;
 
                 ResultsTextBlock.Text = $"Valores Ordenados ({selectedMethod}): {string.Join(", ", currentValues)}\n" +
-                                        $"Tempo de execução: {elapsed.TotalMilliseconds:F3} ms";
+                                        $"Tempo de execução: {elapsed.TotalMilliseconds:F3} ms\n" +
+                                        $"Comparações: {comparisons}, Trocas: {swaps}";
 
-                DrawGraph(currentValues); // Atualiza o gráfico
+                DrawGraph(currentValues);
+                statistics.Add(new SortingStatistics
+                {
+                    Algorithm = selectedMethod,
+                    Comparisons = comparisons,
+                    Swaps = swaps,
+                    TimeElapsed = elapsed.TotalMilliseconds
+                });
             }
             catch
             {
@@ -107,9 +122,6 @@ namespace ProjetoB2_OrdenacaoBusca
             }
         }
 
-        /// <summary>
-        /// Exibe os valores originais.
-        /// </summary>
         private void OriginalValuesButton_Click(object sender, RoutedEventArgs e)
         {
             if (originalValues == null || !originalValues.Any())
@@ -123,48 +135,35 @@ namespace ProjetoB2_OrdenacaoBusca
             DrawGraph(currentValues);
         }
 
-        /// <summary>
-        /// Limpa os valores e resultados.
-        /// </summary>
         private void ClearButton_Click(object sender, RoutedEventArgs e)
         {
             originalValues = null;
             currentValues = null;
             ResultsTextBlock.Text = "Resultados aparecerão aqui...";
-            GraphCanvas.Children.Clear(); // Limpa o gráfico
+            GraphCanvas.Children.Clear();
         }
 
-        /// <summary>
-        /// Fecha o aplicativo.
-        /// </summary>
         private void ExitButton_Click(object sender, RoutedEventArgs e)
         {
             Application.Current.Shutdown();
         }
 
-        /// <summary>
-        /// Abre a janela de configurações para ajustar a velocidade de ordenação.
-        /// </summary>
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
             var settingsWindow = new SettingsWindow(sortingDelay);
 
-            if (settingsWindow.ShowDialog() == true) // Exibe a janela de configurações
+            if (settingsWindow.ShowDialog() == true)
             {
-                sortingDelay = settingsWindow.SortingDelay; // Atualiza o delay
-                ResultsTextBlock.Text = $"Velocidade de Ordenação Alterada: " +
-                                        (sortingDelay == 0 ? "Sem Delay" : $"{sortingDelay} ms");
+                sortingDelay = settingsWindow.SortingDelay;
+                ResultsTextBlock.Text = $"Velocidade de Ordenação Alterada: {(sortingDelay == 0 ? "Sem Delay" : $"{sortingDelay} ms")}";
             }
         }
 
-        private List<SortingStatistics> statistics = new List<SortingStatistics>();
-
         private void StatisticsButton_Click(object sender, RoutedEventArgs e)
         {
-            if (statistics.Count == 0)
+            if (!statistics.Any())
             {
-                MessageBox.Show("Não há estatísticas disponíveis. Realize uma ordenação primeiro.",
-                                "Aviso", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Não há estatísticas disponíveis. Realize uma ordenação primeiro.", "Aviso", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
@@ -172,10 +171,6 @@ namespace ProjetoB2_OrdenacaoBusca
             statisticsWindow.ShowDialog();
         }
 
-
-        /// <summary>
-        /// Desenha o gráfico no Canvas.
-        /// </summary>
         private void DrawGraph(List<int> values)
         {
             GraphCanvas.Children.Clear();
@@ -191,10 +186,9 @@ namespace ProjetoB2_OrdenacaoBusca
             {
                 double barHeight = (values[i] / maxValue) * canvasHeight;
 
-                // Desenha a barra
                 var rect = new Rectangle
                 {
-                    Width = barWidth - 2, // Espaço entre as barras
+                    Width = barWidth - 2,
                     Height = barHeight,
                     Fill = Brushes.SteelBlue
                 };
@@ -202,152 +196,7 @@ namespace ProjetoB2_OrdenacaoBusca
                 Canvas.SetLeft(rect, i * barWidth);
                 Canvas.SetTop(rect, canvasHeight - barHeight);
                 GraphCanvas.Children.Add(rect);
-
-                // Adiciona o texto (valor) acima da barra
-                var text = new TextBlock
-                {
-                    Text = values[i].ToString(),
-                    FontSize = 12,
-                    Foreground = Brushes.Black
-                };
-
-                Canvas.SetLeft(text, i * barWidth + (barWidth - text.ActualWidth) / 2);
-                Canvas.SetTop(text, canvasHeight - barHeight - 20); // 20 pixels acima da barra
-                GraphCanvas.Children.Add(text);
             }
         }
-
-
-        #region Algoritmos de Ordenação
-        private async Task BubbleSortAsync(List<int> list)
-        {
-            for (int i = 0; i < list.Count - 1; i++)
-            {
-                for (int j = 0; j < list.Count - i - 1; j++)
-                {
-                    if (list[j] > list[j + 1])
-                    {
-                        (list[j], list[j + 1]) = (list[j + 1], list[j]);
-
-                        DrawGraph(list);
-                        await Task.Delay(sortingDelay);
-                    }
-                }
-            }
-        }
-
-        private async Task SelectionSortAsync(List<int> list)
-        {
-            for (int i = 0; i < list.Count - 1; i++)
-            {
-                int minIndex = i;
-                for (int j = i + 1; j < list.Count; j++)
-                {
-                    if (list[j] < list[minIndex])
-                    {
-                        minIndex = j;
-                    }
-                }
-
-                if (minIndex != i)
-                {
-                    (list[i], list[minIndex]) = (list[minIndex], list[i]);
-                }
-
-                DrawGraph(list);
-                await Task.Delay(sortingDelay);
-            }
-        }
-
-        private async Task InsertionSortAsync(List<int> list)
-        {
-            for (int i = 1; i < list.Count; i++)
-            {
-                int key = list[i];
-                int j = i - 1;
-
-                while (j >= 0 && list[j] > key)
-                {
-                    list[j + 1] = list[j];
-                    j--;
-
-                    DrawGraph(list);
-                    await Task.Delay(sortingDelay);
-                }
-
-                list[j + 1] = key;
-                DrawGraph(list);
-                await Task.Delay(sortingDelay);
-            }
-        }
-
-        private async Task QuickSortAsync(List<int> list, int low, int high)
-        {
-            if (low < high)
-            {
-                int pivotIndex = Partition(list, low, high);
-
-                DrawGraph(list);
-                await Task.Delay(sortingDelay);
-
-                await QuickSortAsync(list, low, pivotIndex - 1);
-                await QuickSortAsync(list, pivotIndex + 1, high);
-            }
-        }
-
-        private int Partition(List<int> list, int low, int high)
-        {
-            int pivot = list[high];
-            int i = low - 1;
-
-            for (int j = low; j < high; j++)
-            {
-                if (list[j] <= pivot)
-                {
-                    i++;
-                    (list[i], list[j]) = (list[j], list[i]);
-                }
-            }
-
-            (list[i + 1], list[high]) = (list[high], list[i + 1]);
-            return i + 1;
-        }
-
-        private List<int> MergeSort(List<int> list)
-        {
-            if (list.Count <= 1)
-                return list;
-
-            int mid = list.Count / 2;
-            var left = MergeSort(list.Take(mid).ToList());
-            var right = MergeSort(list.Skip(mid).ToList());
-
-            return Merge(left, right);
-        }
-
-        private List<int> Merge(List<int> left, List<int> right)
-        {
-            var result = new List<int>();
-            int i = 0, j = 0;
-
-            while (i < left.Count && j < right.Count)
-            {
-                if (left[i] <= right[j])
-                {
-                    result.Add(left[i]);
-                    i++;
-                }
-                else
-                {
-                    result.Add(right[j]);
-                    j++;
-                }
-            }
-
-            result.AddRange(left.Skip(i));
-            result.AddRange(right.Skip(j));
-            return result;
-        }
-        #endregion
     }
 }
