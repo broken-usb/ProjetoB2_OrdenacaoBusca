@@ -13,7 +13,6 @@ namespace ProjetoB2_OrdenacaoBusca
 {
     public partial class MainWindow : Window
     {
-        private MetricsCollector metrics = new MetricsCollector();
         private List<int> originalValues;
         private List<int> currentValues;
         private int sortingDelay = 100; // Delay padrão em milissegundos
@@ -22,7 +21,6 @@ namespace ProjetoB2_OrdenacaoBusca
         public MainWindow()
         {
             InitializeComponent();
-            // Eventos dos botões
             GenerateValuesButton.Click += GenerateValuesButton_Click;
             SortValuesButton.Click += SortValuesButton_Click;
             OriginalValuesButton.Click += OriginalValuesButton_Click;
@@ -37,7 +35,7 @@ namespace ProjetoB2_OrdenacaoBusca
             try
             {
                 int quantity = int.Parse(((ComboBoxItem)QuantityComboBox.SelectedItem).Content.ToString());
-                originalValues = RandomListGenerator.GenerateRandomList(quantity, 100);
+                originalValues = RandomListGenerator.GenerateRandomList(quantity, 100).ToList();
                 currentValues = new List<int>(originalValues);
 
                 ResultsTextBlock.Text = $"Valores Gerados: {string.Join(", ", currentValues)}";
@@ -47,6 +45,19 @@ namespace ProjetoB2_OrdenacaoBusca
             {
                 MessageBox.Show("Selecione uma quantidade válida.", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void OriginalValuesButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (originalValues == null || !originalValues.Any())
+            {
+                MessageBox.Show("Gere os valores primeiro.", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            currentValues = new List<int>(originalValues);
+            ResultsTextBlock.Text = $"Valores Originais: {string.Join(", ", currentValues)}";
+            DrawGraph(currentValues);
         }
 
         private async void SortValuesButton_Click(object sender, RoutedEventArgs e)
@@ -66,34 +77,16 @@ namespace ProjetoB2_OrdenacaoBusca
                 switch (selectedMethod)
                 {
                     case "Bubble Sort":
-                        var resultBubble = await SortingAlgorithms.BubbleSortAsync(currentValues, sortingDelay, DrawGraph);
-                        comparisons = resultBubble.Comparisons;
-                        swaps = resultBubble.Swaps;
+                        var resultBubble = await Task.Run(() =>
+                        {
+                            return SortingAlgorithms.BubbleSort(currentValues.ToArray());
+                        });
+                        comparisons = resultBubble.comparisons;
+                        swaps = resultBubble.swaps;
+                        currentValues = resultBubble.sortedArray.ToList();
                         break;
 
-                    case "Selection Sort":
-                        var resultSelection = await SortingAlgorithms.SelectionSortAsync(currentValues, sortingDelay, DrawGraph);
-                        comparisons = resultSelection.Comparisons;
-                        swaps = resultSelection.Swaps;
-                        break;
-
-                    case "Insertion Sort":
-                        var resultInsertion = await SortingAlgorithms.InsertionSortAsync(currentValues, sortingDelay, DrawGraph);
-                        comparisons = resultInsertion.Comparisons;
-                        swaps = resultInsertion.Swaps;
-                        break;
-
-                    case "Quick Sort":
-                        var resultQuick = await SortingAlgorithms.QuickSortAsync(currentValues, 0, currentValues.Count - 1, sortingDelay, DrawGraph);
-                        comparisons = resultQuick.Comparisons;
-                        swaps = resultQuick.Swaps;
-                        break;
-
-                    case "Merge Sort":
-                        var resultMerge = SortingAlgorithms.MergeSort(currentValues);
-                        comparisons = resultMerge.Comparisons;
-                        currentValues = resultMerge.SortedArray;
-                        break;
+                    // Adicione outros métodos de ordenação aqui, caso necessário.
 
                     default:
                         MessageBox.Show("Selecione um método válido.", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -108,31 +101,12 @@ namespace ProjetoB2_OrdenacaoBusca
                                         $"Comparações: {comparisons}, Trocas: {swaps}";
 
                 DrawGraph(currentValues);
-                statistics.Add(new SortingStatistics
-                {
-                    Algorithm = selectedMethod,
-                    Comparisons = comparisons,
-                    Swaps = swaps,
-                    TimeElapsed = elapsed.TotalMilliseconds
-                });
+                statistics.Add(new SortingStatistics(selectedMethod, comparisons, swaps, (long)elapsed.TotalMilliseconds));
             }
             catch
             {
                 MessageBox.Show("Erro ao ordenar os valores.", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        }
-
-        private void OriginalValuesButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (originalValues == null || !originalValues.Any())
-            {
-                MessageBox.Show("Gere os valores primeiro.", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-            currentValues = new List<int>(originalValues);
-            ResultsTextBlock.Text = $"Valores Originais: {string.Join(", ", currentValues)}";
-            DrawGraph(currentValues);
         }
 
         private void ClearButton_Click(object sender, RoutedEventArgs e)

@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace ProjetoB2_OrdenacaoBusca
+namespace ProjetoB2_OrdenacaoBusca.Classes
 {
-    public class SortingAlgorithms
+    public static class SortingAlgorithms
     {
         public static (int[] sortedArray, int comparisons, int swaps) BubbleSort(int[] array)
         {
@@ -24,7 +24,5 @@ namespace ProjetoB2_OrdenacaoBusca
             }
             return (sortedArray, comparisons, swaps);
         }
-
-        // Outros algoritmos de ordenação podem ser adicionados aqui seguindo o mesmo padrão.
     }
 }

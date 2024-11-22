@@ -15,6 +15,9 @@
 
         <!-- Settings Content -->
         <StackPanel Grid.Row="1">
+            <TextBlock Text="Sorting Delay (ms):" Margin="0,0,0,5"/>
+            <TextBox Name="DelayInput" Width="200" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+
             <TextBlock Text="Number of Elements:" Margin="0,0,0,5"/>
             <TextBox Name="NumberOfElementsInput" Width="200" HorizontalAlignment="Center" Margin="0,0,0,10"/>
 
