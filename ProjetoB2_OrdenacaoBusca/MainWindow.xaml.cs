@@ -13,6 +13,7 @@ namespace ProjetoB2_OrdenacaoBusca
 {
     public partial class MainWindow : Window
     {
+        private bool isDarkTheme = false;
         private List<int> originalValues;
         private List<int> currentValues;
         private int sortingDelay = 10; // Delay padrão em milissegundos
@@ -28,6 +29,60 @@ namespace ProjetoB2_OrdenacaoBusca
             ExitButton.Click += ExitButton_Click;
             SettingsButton.Click += SettingsButton_Click;
             StatisticsButton.Click += StatisticsButton_Click;
+        }
+        private void ToggleThemeButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (isDarkTheme)
+            {
+                ((App)Application.Current).ApplyLightTheme();
+                isDarkTheme = false;
+            }
+            else
+            {
+                ((App)Application.Current).ApplyDarkTheme();
+                isDarkTheme = true;
+            }
+        }
+
+        public partial class App : Application
+        {
+            public void ApplyDarkTheme()
+            {
+                try
+                {
+                    var darkTheme = new ResourceDictionary
+                    {
+                        Source = new Uri("DarkTheme.xaml", UriKind.Relative)
+                    };
+
+                    // Remove os dicionários antigos e aplica o novo tema
+                    Resources.MergedDictionaries.Clear();
+                    Resources.MergedDictionaries.Add(darkTheme);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Erro ao aplicar o tema escuro: {ex.Message}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+
+            public void ApplyLightTheme()
+            {
+                try
+                {
+                    var lightTheme = new ResourceDictionary
+                    {
+                        Source = new Uri("LightTheme.xaml", UriKind.Relative)
+                    };
+
+                    // Remove os dicionários antigos e aplica o novo tema
+                    Resources.MergedDictionaries.Clear();
+                    Resources.MergedDictionaries.Add(lightTheme);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Erro ao aplicar o tema claro: {ex.Message}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
         }
 
         private void GenerateValuesButton_Click(object sender, RoutedEventArgs e)
